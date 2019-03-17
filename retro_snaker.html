@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Sanke</title>
+	<style>
+		td{
+			width: 20px;
+			height: 20px;
+		}
+		.snake{
+			background:pink;
+		}
+		.head{
+			background:red;
+		}
+		.bg{
+			background:white;
+		}
+		.food{
+			background: green;
+			/* 行走时不会被覆盖 */
+		}
+	</style>
+	<script>
+		function $(id){
+			return document.getElementById(id);
+		}
+		var timer;//计时器循环功能
+		var start=0;//head出发的位置
+		var snakebody=[5,4,3,2,1,0];//蛇的身体所在的单元格位置
+		var direct=4;//起始方向 1上 3下 2左 4右
+		var head=start+snakebody.length;//head出发的单元格
+		var status=-1;
+		var food;
+
+		//从出发点生成蛇，并自动向右走
+		function create(){
+			clearTimeout(timer);
+			start=0;
+			direct=4;
+			snakebody=[5,4,3,2,1,0];
+			head=start+snakebody.length;
+			var cells=document.getElementsByTagName("td");
+			for(var i=0;i<cells.length;i++){
+				cells[i].className="bg";
+				for(var j=0;j<snakebody.length;j++){
+					if(i==snakebody[j])	cells[i].className="snake";
+					if(i==head) cells[i].className="head";
+				}
+			}
+			createfood();
+			status=0;
+			//timer=setTimeout(function(){run(4)},200);
+		}
+		//暂停功能
+		function stop(){
+			clearTimeout(timer);
+			status=0;
+		}
+		//继续功能
+		function goon(){
+			run(direct);
+			status=1;
+		}
+
+		//定义行动方法
+		var temp;
+		function run(num){
+ 			//检测头是否越出边界或者撞到身体
+			if((num==1&&head<20)||(num==3&&head>379)||(num==2&&(head)%20==0)||(num==4&&(head+2)%20==1)){
+				alert("游戏结束！你的得分是：" + (snakebody.length-6));
+				create();//越出边界
+			}else{
+				clearTimeout(timer);
+				var cells=document.getElementsByTagName("td");
+				//控制不能反向走
+				if(Math.abs(direct-num)!=2) direct=num;	
+				//判断头部是否碰到食物,碰到的话尾巴延长到走过的上一个位置
+				temp=snakebody[snakebody.length-1];
+				if(head==food){
+					snakebody[snakebody.length]=temp;
+					removefood();
+					createfood();
+				}		
+				// 把头部此时的位置传给身体,确定此时身体的位置
+
+				for(var i=snakebody.length-1;i>=0;i--){
+					if(i==0){
+						snakebody[i]=head;
+					}else{
+						snakebody[i]=snakebody[i-1];
+					}
+				}
+				<!--console.log(head);-->
+				<!--console.log(snakebody);-->
+				// 根据接收到的方向确定下一步头部所在的位置，并检测左右是否越界
+				switch(direct){
+					case 1:	
+						head-=20; break;
+					case 3:	
+						head+=20; break;
+					case 2:	
+						head--;	break;						
+					case 4:	
+						head++; break;
+									
+				}
+				//前进，为身体和头部染色
+				for(var i=0;i<cells.length;i++){				
+					cells[i].className="bg";
+					for(var j=0;j<snakebody.length;j++){
+						// if(i==head) cells[i].className="head";
+						if(i==snakebody[j]) cells[i].className="snake";
+						if(i==food) cells[i].className="food";
+						if(i==head) cells[i].className="head";
+							
+					}
+				}
+				//计时器形成循环,同时判断是否撞到自己的身体
+				for(var i=0;i<snakebody.length;i++){
+					if(snakebody[i]==head){
+						alert("游戏结束！"+"你的得分是："+(snakebody.length-6));
+						create();
+						break;
+					}else{
+						clearTimeout(timer);
+						timer=setTimeout(function(){run(num)},200);
+					}
+				}
+				
+			}
+		}
+			
+		//创造一个食物
+		
+		function createfood(){
+			removefood();
+			var cells=document.getElementsByTagName("td");
+			food=Math.floor(Math.random()*400);
+			cells[food].className="food";
+			<!--console.log(food);-->
+		}
+		//清空食物
+		function removefood(){
+			var cells=document.getElementsByTagName("td");
+			for(var i=0;i<cells.length;i++){
+				if(i==food){
+					cells[food].className="bg";
+				}
+			}
+		}
+		document.onkeyup = function(event){
+			var e = event || window.event || arguments.callee.caller.arguments[0];
+
+			if(e && e.keyCode==38){//上
+			 	run(1);
+			}
+			if(e && e.keyCode==37){//左
+				run(2);
+			}
+			if(e && e.keyCode==40){//下
+				run(3);
+			}
+			if(e && e.keyCode==39){//右
+				run(4)
+			}
+			if(e && e.keyCode==32){//空格
+				if(status==-1){
+					create();
+				}else if(status==1){
+					stop();
+				}else{
+					status=1;
+					goon();
+				}
+			}
+		}
+
+	</script>
+</head>
+<body>
+	<!--<input type="button" value="重新开始" onclick="create()">-->
+	<!--<input type="button" value="暂停" onclick="stop()">-->
+	<!--<input type="button" value="继续" onclick="goon()">-->
+	<!--<input type="button" value="生成食物" onclick="createfood()">-->
+	<!--<input type="button" value="测试一下" onclick="walk()">-->
+	<!--<input type="button" value="上" onclick="run(1)">-->
+	<!--<input type="button" value="下" onclick="run(3)">-->
+	<!--<input type="button" value="左" onclick="run(2)">-->
+	<!--<input type="button" value="右" onclick="run(4)">-->
+	<table border="1" cellspacing="0" cellpadding="0">
+		<tbody>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+			<tr>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+				<td></td>
+			</tr>
+		</tbody>
+	</table>
+</body>
+</html>

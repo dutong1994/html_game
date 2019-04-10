@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		td{
+			width: 40px;
+			height: 40px;
+			color: white;
+			text-align: center;
+			cursor: pointer;
+		}
+	</style>
+	<script>
+
+		//在后台生成指定数目炸弹的随机位置
+		var bombsnum=20;//设置总共生成雷的数量
+		var bombs=[];//存放炸弹的位置
+		var l=9;//表格长度
+		for(var i=0;i<bombsnum;i++){
+			bombs[bombs.length]=Math.floor(Math.random()*l*l);
+			//每生成一次与前面的所有数对比，如果相同的话重新生成
+			for(var j=0;j<i;j++){
+				if(bombs[i]==bombs[j]){
+					bombs.pop();i--;
+				}
+			}
+		}
+		console.log(bombs);//展示炸弹所有坐标
+
+		//把雷作为1，安全区作为0存放到一个二维数组中
+		var arr=[];
+		for(var i=0;i<l+2;i++){
+			arr[i]=[];
+			for(var j=0;j<l+2;j++){
+				if(i==0||j==0||i==l+1||j==l+1){
+					arr[i][j]=0;
+				}else{
+					arr[i][j]=0;
+					for(var k=0;k<bombs.length;k++){
+						if(bombs[k]==(i-1)*l+(j-1)){
+							arr[i][j]=1;
+						}
+					}
+				}
+			}
+		}
+		console.log(arr);
+		//计算已经放进去的雷数量
+		var num=0;
+		for(var i=0;i<l+2;i++){
+			for(var j=0;j<l+2;j++){
+				num+=arr[i][j];
+			}
+		}
+		console.log(num);
+
+		//计算每个安全区周围雷的个数，并将雷标记为＊，在后台生成地图
+		var map=[];
+		for(var i=0;i<l;i++){
+		 	map[i]=[];
+		 	for(var j=0;j<l;j++){
+		 		if(!arr[i+1][j+1]){
+		 			map[i][j]=arr[i][j]+arr[i+1][j]+arr[i+2][j]+arr[i][j+1]+arr[i+2][j+1]+arr[i][j+2]+arr[i+1][j+2]+arr[i+2][j+2];
+		 		}else{
+		 			map[i][j]="*";
+		 		}
+		 	}
+		 	console.log(map[i]);
+		}
+		//为每个单元格绑定点击事件，根据单选框的选择情况展示不同的点击效果
+		//获取单选框的选择
+		function choose(){
+			var safe=document.getElementById("safe").checked;
+			var danger=document.getElementById("danger").checked;
+			var doubt=document.getElementById("doubt").checked;
+			if(safe){
+				return "safe";
+			}else if(danger){
+				return "danger";
+			}else{
+				return "doubt";
+			}
+		}
+
+		//踩到雷或者放弃，展示全部的结果，并且不能再次点击
+		function show(){
+			var tds=document.getElementsByTagName("td");
+			var k=0;
+			for(var i=0;i<l;i++){
+				for(var j=0;j<l;j++){
+					tds[k].innerHTML=map[i][j];
+					tds[k].touch=false;
+					tds[k].style.background="hotpink";
+					k++;
+				}
+			}
+		}
+
+		// 根据表格长度生成表格，并通过row\col属性标记每个单元格，与地图对应，并绑定点击事件
+		window.onload=function(){
+			var tbody=document.getElementById("tbody");
+			var count=0;
+			for(var i=0;i<l;i++){
+				var tr=document.createElement("tr");
+				for(var j=0;j<l;j++){
+					var td=document.createElement("td");
+					td.row=i;
+					td.col=j;
+					td.touch=true;//未展示出来的记为true，展示出来的记为false
+					td.onclick=function(){doClick(this.row*1,this.col*1)};
+					tr.appendChild(td);
+				}
+				tbody.appendChild(tr);
+			}
+		}
+		//根据此时操作单选框的选择触发不同的点击函数
+		function doClick(row,col){
+			var tds=document.getElementsByTagName("td");
+			var loc=row*l+col;
+			// console.log(row,col,loc);
+			//对touch进行判断，如果已经被展示过，不再能改变，雷和怀疑区都可以改变
+			if(!tds[loc].touch) return;
+			switch(choose()){
+				//标记安全区，相当于翻开，对应位置有雷的话游戏结束并展示结果，如果为数字展示为蓝色
+				case "safe":    
+					if(map[row][col]=="*"){
+						show();
+					}else{
+						tds[loc].innerHTML=map[row][col];
+						tds[loc].touch=false;//数字展示出来后不能再更换选择，touch属性设为false
+						tds[loc].style.background="lightblue";
+						if(map[row][col]==0){
+							lightnear(row,col);
+						}
+					}
+					//判断是否所有的安全区都已经找到，都找到的话游戏结束
+					var unclickNum=0;
+					for(var i=0;i<tds.length;i++){
+						if(tds[i].touch) unclickNum++;
+					}					
+					console.log(unclickNum);					
+					if(unclickNum==bombsnum){
+						alert("游戏胜利！");
+						show();
+						}
+
+					// if(i==tds.length) alter("游戏胜利！");				
+					break;
+				//标记雷区，变为红色，且可以更改
+				case "danger":
+					tds[loc].style.background="red";
+					tds[loc].innerHTML="雷";
+					break;
+				//标记怀疑区为灰色，且可以更改
+				case "doubt": 
+					tds[loc].style.background="#aaa";
+					tds[loc].innerHTML="?";
+					break;
+			}
+		
+		}
+		//点亮0所在的整个3*3区域，如果周围还有0，继续点亮
+		function lightnear(row,col){
+			var tds=document.getElementsByTagName("td");
+			for(var i=row-1;i<=row+1;i++){
+				for(var j=col-1;j<=col+1;j++){
+					if(i>=0&&i<l&&j>=0&&j<l&&(i!=row||j!=col)&&tds[i*l+j].touch){
+						tds[i*l+j].innerHTML=map[i][j];
+						tds[i*l+j].touch=false;
+						tds[i*l+j].style.background="lightblue";
+						if(map[i][j]==0){
+							lightnear(i,j);
+						}
+					}
+				}
+			}
+		}
+
+	</script>
+</head>
+<body>
+	<table  border="1" cellspacing="0" cellpadding="0">
+		<tbody id="tbody"></tbody>
+	</table>
+	<input type="button" value="生成" onclick="show()">
+	<br>
+	操作选择：
+	<input type="radio" name="select" checked id="safe">
+	<label for="safe">标记安全区</label>
+	<input type="radio" name="select" id="danger">
+	<label for="danger">标记雷区</label>
+	<input type="radio" name="select" id="doubt">
+	<label for="doubt">标记怀疑区</label>
+</body>
+</html>
